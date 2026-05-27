@@ -1,0 +1,13 @@
+.quarto-title-block .quarto-title-meta {
+  font-family: "Source Serif 4", Georgia, serif;
+}
+
+.flourish-embed iframe { min-height: 500px; }
+
+details > summary {
+  color: #1a3a52;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+details > summary:hover { color: #b8341d; }

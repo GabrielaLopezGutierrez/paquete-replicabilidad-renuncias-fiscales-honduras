@@ -1,0 +1,112 @@
+---
+title: "Cómo replicar"
+subtitle: "Guía paso a paso"
+toc: true
+---
+
+Hay tres rutas para correr el análisis, en orden creciente de fricción y completitud:
+
+## Ruta 1: leer en el navegador
+
+No requiere setup. Andá a [Análisis](analisis.qmd) y mirá las figuras, el código y las tablas tal como están renderizadas. Es la opción para periodistas, lectores de política pública y revisión rápida.
+
+## Ruta 2: correr en Google Colab
+
+Buena para investigadores que quieren ejecutar el código sin instalar nada localmente.
+
+1. Descargar el notebook desde el botón **"Descargar notebook"** en la portada (o [acá](analisis.ipynb)).
+2. Subirlo a [Google Colab](https://colab.research.google.com/).
+3. Descargar las fuentes `raw/` desde el origen siguiendo las instrucciones en [Fuentes y licencias](fuentes.qmd) y subirlas al runtime de Colab.
+4. Las tablas auxiliares ya vienen en el repo; clonarlas con:
+
+```bash
+!git clone https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras.git
+```
+
+5. Ejecutar todo el notebook (`Runtime → Run all`).
+
+## Ruta 3: correr local con el repositorio completo
+
+La opción recomendada si querés inspeccionar diffs, contribuir cambios, o tener una copia versionada. Requiere Git y Python 3.11+.
+
+### Pre-requisitos
+
+```bash
+python --version  # 3.11 o superior
+git --version
+```
+
+### Clonar el repositorio
+
+```bash
+git clone https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras.git
+cd paquete-replicabilidad-renuncias-fiscales-honduras
+```
+
+### Descargar los datos raw
+
+Las fuentes externas (~110 MB) no se redistribuyen automáticamente para respetar las licencias de cada proveedor. Seguir las instrucciones en [Fuentes y licencias](fuentes.qmd) para descargar:
+
+- GTED Full Database
+- World Bank Income Groups
+- UNU-WIDER GRD 2025
+- OECD Revenue Statistics (Honduras)
+- ENIGH 2023-2024 (BCH)
+
+Colocar cada archivo en la subcarpeta correspondiente bajo `data/input/raw/`. La estructura esperada está documentada en `data/input/raw/README.md`.
+
+### Instalar dependencias
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Ejecutar el análisis
+
+```bash
+# Opción A: como notebook interactivo
+jupyter lab analisis.qmd
+
+# Opción B: renderizar el sitio completo localmente
+quarto preview
+
+# Opción C: ejecutar solo el código sin renderizar
+quarto render analisis.qmd --to ipynb
+jupyter nbconvert --execute analisis.ipynb
+```
+
+## Estructura del repositorio
+
+```
+paquete-replicabilidad-renuncias-fiscales-honduras/
+├── _quarto.yml              # Configuración del sitio
+├── index.qmd                # Portada
+├── analisis.qmd             # Análisis completo (fuente)
+├── replicar.qmd             # Esta página
+├── fuentes.qmd              # Fuentes y licencias
+├── requirements.txt         # Dependencias Python
+├── data/
+│   ├── input/
+│   │   ├── raw/             # Fuentes externas (descargar manualmente)
+│   │   │   ├── GTED_WB/
+│   │   │   ├── ENIGH/
+│   │   │   └── Recaudacion_Tributaria/
+│   │   └── auxiliary/       # Tablas puente de Sendas
+│   └── output/              # Resultados generados
+├── docs/
+│   └── documentacion.pdf    # Documentación metodológica
+└── resources/               # Estilos y assets del sitio
+```
+
+## Reportar problemas
+
+Si el análisis no corre o produce resultados distintos a los publicados, abrí un [issue en GitHub](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/issues/new) describiendo:
+
+- Sistema operativo y versión de Python
+- Comando exacto que ejecutaste
+- Mensaje de error completo
+- Si modificaste algo, qué
+
+Para preguntas metodológicas o conceptuales escribí a [economic-team@sendas.org](mailto:economic-team@sendas.org).

@@ -1,0 +1,87 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - "docs/*.pdf"
+    - "data/output/*.xlsx"
+
+website:
+  title: "Renuncias fiscales sin seguimiento"
+  description: "Paquete de replicabilidad · Sendas Think Tank"
+  site-url: https://gabrielalopezgutierrez.github.io/paquete-replicabilidad-renuncias-fiscales-honduras
+  repo-url: https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras
+  repo-actions: [edit, source, issue]
+  page-navigation: true
+  back-to-top-navigation: true
+
+  navbar:
+    background: light
+    pinned: true
+    logo: resources/sendas-logo.svg
+    left:
+      - href: index.qmd
+        text: Inicio
+      - href: analisis.qmd
+        text: Análisis
+      - href: replicar.qmd
+        text: Cómo replicar
+      - href: fuentes.qmd
+        text: Fuentes y licencias
+    right:
+      - icon: file-earmark-pdf
+        href: docs/documentacion.pdf
+        aria-label: Documentación PDF
+      - icon: github
+        href: https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras
+        aria-label: Repositorio
+
+  sidebar:
+    style: docked
+    contents:
+      - section: "El paquete"
+        contents:
+          - href: index.qmd
+            text: Resumen
+          - href: replicar.qmd
+            text: Cómo replicar
+          - href: fuentes.qmd
+            text: Fuentes y licencias
+      - section: "Análisis"
+        contents:
+          - href: analisis.qmd
+            text: Análisis completo
+
+  page-footer:
+    background: light
+    left: |
+      © 2026 Sendas Think Tank · Análisis bajo CC BY 4.0
+    right: |
+      Construido con [Quarto](https://quarto.org)
+
+format:
+  html:
+    theme:
+      light: [cosmo, resources/sendas.scss]
+    css: resources/sendas.css
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    code-fold: true
+    code-tools: true
+    code-overflow: wrap
+    code-copy: true
+    fig-align: center
+    fig-width: 9
+    fig-dpi: 150
+    df-print: paged
+    smooth-scroll: true
+    link-external-newwindow: true
+    anchor-sections: true
+    citations-hover: true
+    lang: es
+
+execute:
+  freeze: auto
+  warning: false
+
+lang: es

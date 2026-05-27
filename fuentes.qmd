@@ -1,0 +1,88 @@
+---
+title: "Fuentes y licencias"
+subtitle: "Procedencia, vintage y términos de uso"
+toc: true
+---
+
+Esta página documenta cada fuente externa usada en el análisis: dónde se obtuvo, cuándo se descargó, y bajo qué licencia.
+
+::: {.callout-important}
+## Estado de verificación de licencias
+
+Los términos de redistribución de cada fuente requieren confirmación antes de cualquier consideración futura de redistribuir archivos directamente con el paquete. Mientras tanto, todos los archivos raw deben descargarse manualmente desde el origen.
+:::
+
+## Resumen
+
+| Fuente | Tamaño | Licencia | Vintage |
+|---|---:|---|---|
+| GTED Full Database | 16.6 MB | CC BY 4.0 (ICTD/CEP) | 2025-10-10 |
+| World Bank Income Groups | 68 KB | CC BY 4.0 | 2025-12-18 |
+| UNU-WIDER GRD 2025 | 12.4 MB | CC BY-NC-SA ⚠ por verificar | 2026-03-01 |
+| OECD Revenue Statistics HN | 36 KB | OECD terms ⚠ por verificar | 2026-03-10 |
+| ENIGH 2023-2024 (BCH) | 81.9 MB | BCH terms ⚠ por verificar | 2026-05-06 |
+
+## Fuentes externas
+
+### Global Tax Expenditure Database (GTED)
+
+**Proveedor.** Council on Economic Policies (CEP) y German Institute of Development and Sustainability (IDOS).
+**URL.** <https://gted.taxexpenditures.org/data-download/>
+**Archivo.** `GTED_FullDatabase_20251010.xlsx` → `data/input/raw/GTED_WB/`
+**Vintage de descarga.** 10 de octubre de 2025.
+**Licencia.** Creative Commons Attribution 4.0 (CC BY 4.0).
+**Cómo citar la fuente original.**
+
+::: {.citation-box}
+Redonda, A., von Haldenwang, C., & Aliu, F. (2024). The Global Tax Expenditures Database (GTED). Companion Paper. Council on Economic Policies and German Institute of Development and Sustainability.
+:::
+
+### World Bank Country and Lending Groups
+
+**Proveedor.** World Bank.
+**URL.** <https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups>
+**Archivo.** `c_wb_incomeg.xlsx` → `data/input/raw/GTED_WB/`
+**Vintage de descarga.** 18 de diciembre de 2025.
+**Licencia.** Creative Commons Attribution 4.0 (CC BY 4.0).
+
+### UNU-WIDER Government Revenue Dataset (GRD)
+
+**Proveedor.** United Nations University World Institute for Development Economics Research.
+**URL.** <https://www.wider.unu.edu/project/grd-government-revenue-dataset>
+**Archivo.** `UNUWIDERGRD_2025_Full.xlsx` → `data/input/raw/Recaudacion_Tributaria/`
+**Vintage de descarga.** 1 de marzo de 2026.
+**Licencia.** ⚠ **Por verificar.**
+
+### OECD Revenue Statistics in Latin America and the Caribbean
+
+**Proveedor.** OECD.
+**URL.** <https://data-explorer.oecd.org/vis?fs[0]=Topic%2C1%7CTaxation%23TAX%23%7CGlobal%20tax%20revenues%23TAX_GTR%23&fs[1]=Reference%20area%2C0%7CHonduras%23HND%23>
+**Archivo.** `OECD_revenueHN.xlsx` → `data/input/raw/Recaudacion_Tributaria/`
+**Vintage de descarga.** 10 de marzo de 2026.
+**Licencia.** ⚠ **Por verificar.**
+
+### ENIGH 2023-2024 (Banco Central de Honduras)
+
+**Proveedor.** Banco Central de Honduras.
+**URL.** <https://www.bch.hn/enigh23-24/pages/archivo-trabajo.html>
+**Archivo.** `GASTOS_ENIGH_HN.csv` → `data/input/raw/ENIGH/`
+**Vintage de descarga.** 6 de mayo de 2026.
+**Licencia.** ⚠ **Por verificar** con el BCH.
+
+## Tablas auxiliares (construidas por Sendas)
+
+Estas tablas codifican decisiones metodológicas y se distribuyen como parte del paquete de replicabilidad bajo CC BY 4.0.
+
+| Archivo | Función |
+|---|---|
+| `translations.xlsx` | Mapeo de etiquetas GTED entre inglés y español |
+| `ISRPJ_Descripcion.xlsx` | Descripción de mecanismos de ISR Persona Jurídica |
+| `unu_taxRevenueToExpenditure_dic.xlsx` | Diccionario UNU-WIDER → categorías GTED |
+| `status2024.xlsx` | Estado de clasificación tributaria 2024 |
+
+## Licencia del paquete
+
+- **Análisis y documentación** — [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- **Código** — [MIT](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/blob/main/LICENSE)
+- **Tablas auxiliares Sendas** — CC BY 4.0
+- **Fuentes externas** — bajo las licencias de cada proveedor (ver arriba)

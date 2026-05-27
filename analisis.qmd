@@ -1,0 +1,222 @@
+---
+title: "Análisis"
+subtitle: "Renuncias fiscales sin seguimiento"
+author: "Gabriela López Gutiérrez · Sendas Think Tank"
+date: "2026-05-06"
+date-format: long
+toc: true
+toc-depth: 3
+number-sections: true
+jupyter: python3
+format:
+  html:
+    code-fold: true
+    code-summary: "Mostrar código"
+ipynb-shell-interactivity: all
+---
+
+::: {.callout-note collapse="true"}
+## Sobre esta página
+
+Cada figura del informe se presenta en tres capas: la **visualización interactiva** (Flourish), el **código** que la genera (plegado por defecto) y la **tabla de datos** que la alimenta. Podés descargar el notebook completo con el botón ⤓ arriba a la derecha, o ver el archivo `.qmd` fuente en [GitHub](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/blob/main/analisis.qmd).
+:::
+
+# Configuración {#sec-config}
+
+```{python}
+#| label: setup
+import os, numpy as np, pandas as pd
+
+USE_DRIVE  = False
+DRIVE_PATH = '***ADD DRIVE PATH***'
+
+if USE_DRIVE:
+    from google.colab import drive
+    drive.mount('/content/drive')
+    BASE = DRIVE_PATH
+else:
+    BASE = os.path.dirname(os.path.abspath('.'))
+
+def path(rel):
+    return os.path.join(BASE, rel) if USE_DRIVE else rel
+
+YEAR_MIN, YEAR_MAX = 2017, 2023
+FOCAL_COUNTRY = 'HND'
+INCOME_ORDER = ['Low income', 'Lower middle income', 'Upper middle income', 'High income']
+```
+
+# Carga y preparación de datos {#sec-carga}
+
+> **Pendiente de portar del notebook original.** Carga de GTED + WB, UNU-WIDER, ENIGH y OCDE.
+
+# Análisis comparativo del gasto tributario {#sec-comparativo}
+
+Las figuras 1–3 comparan a Honduras con sus pares por nivel de ingreso del Banco Mundial. Métrica principal: ingreso renunciado como porcentaje del PIB (`RF % of GDP`).
+
+## Figura 1. Gasto Tributario por clasificación de ingresos (% del PIB) {#sec-fig1}
+
+Último valor no nulo disponible de `RF % of GDP` por país dentro del período 2017–2023. Se excluyen países sin clasificación de ingreso del Banco Mundial.
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/26648679/embed"
+        title="Figura 1: Gasto Tributario por clasificación de ingresos"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/26648679/thumbnail" alt="Figura 1" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en GTED y World Bank Country and Lending Groups. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26648679/)*
+
+```{python}
+#| label: fig1-code
+#| eval: false
+def last_valid(row, require_nonzero=False):
+    mask = row.notna() & (row != 0) if require_nonzero else row.notna()
+    return (row[mask].iloc[-1], row[mask].index[-1]) if mask.any() else (None, None)
+
+w_te_db = (df_db
+           .pivot_table(index='País (ISO-3)', columns='Year', values='RF % of GDP', aggfunc='sum')
+           .rename_axis(None, axis=1))
+
+last = w_te_db.apply(lambda r: last_valid(r, require_nonzero=True), axis=1, result_type='expand')
+last.columns = ['Gasto tributario (% PIB)', 'Año del dato']
+
+fig1 = (
+    last.dropna(subset=['Gasto tributario (% PIB)']).reset_index()
+    .merge(meta_cols, on='País (ISO-3)', how='left')
+    .query('`Grupo de ingreso`.notna() and `Año del dato` >= @YEAR_MIN', engine='python')
+    .assign(**{
+        'Grupo de ingreso': lambda df: pd.Categorical(df['Grupo de ingreso'], categories=INCOME_ORDER, ordered=True),
+    })
+    .sort_values('Grupo de ingreso')
+    [['País (ISO-3)', 'País', 'Región', 'Grupo de ingreso', 'Método de estimación',
+      'Gasto tributario (% PIB)', 'Año del dato']]
+)
+
+print(f"Países incluidos: {len(fig1)} · {FOCAL_COUNTRY} incluido: {FOCAL_COUNTRY in fig1['País (ISO-3)'].values}")
+fig1
+```
+
+## Figura 2. Comparativo gasto tributario por tipo de impuesto, 2017–2023 (% del PIB) {#sec-fig2}
+
+Promedio anual de gasto tributario desagregado en Consumo y Renta para cada grupo de ingreso. Honduras se incluye como grupo independiente.
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/26652611/embed"
+        title="Figura 2: Comparativo gasto tributario por tipo de impuesto"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/26652611/thumbnail" alt="Figura 2" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en GTED y World Bank Country and Lending Groups. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26652611/)*
+
+```{python}
+#| label: fig2-code
+#| eval: false
+# Código de Figura 2 — pendiente de portar del notebook original
+```
+
+## Figura 3. Intensidad del Gasto Tributario, 2022 (% Recaudación por tipo de Impuesto) {#sec-fig3}
+
+::: {.callout-warning collapse="true"}
+## Decisión pendiente · doble referencia en el notebook
+El notebook original referencia **dos** assets de Flourish para esta sección. Confirmar cuál corresponde:
+
+- [story/3603248](https://public.flourish.studio/story/3603248/) — formato Story
+- [visualisation/27999833](https://public.flourish.studio/visualisation/27999833/) — visualización simple
+:::
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/27999833/embed"
+        title="Figura 3: Intensidad del Gasto Tributario"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+:::
+
+*Fuente: elaboración propia con base en GTED y UNU-WIDER GRD. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/27999833/)*
+
+```{python}
+#| label: fig3-code
+#| eval: false
+# Código de Figura 3 — pendiente de portar del notebook original
+```
+
+# Análisis de Honduras {#sec-honduras}
+
+## Figura 4. Erosión por mecanismo, 2017–2023 (% Gasto Tributario sobre recaudación) {#sec-fig4}
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/26724362/embed"
+        title="Figura 4: Erosión por mecanismo"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/26724362/thumbnail" alt="Figura 4" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en GTED y OECD Revenue Statistics. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26724362/)*
+
+```{python}
+#| label: fig4-code
+#| eval: false
+# Código de Figura 4 — pendiente de portar del notebook original
+```
+
+## Figura 5. Consumo exento de ISV por quintil de ingreso, 2024 preliminares (% de consumo total) {#sec-fig5}
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/26722987/embed"
+        title="Figura 5: Consumo exento de ISV por quintil"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/26722987/thumbnail" alt="Figura 5" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26722987/)*
+
+```{python}
+#| label: fig5-code
+#| eval: false
+# Código de Figura 5 — pendiente de portar del notebook original
+```
+
+## Figura 6. Participación del consumo exento del ISV en el consumo total, por quintil de ingreso {#sec-fig6}
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/28006279/embed"
+        title="Figura 6: Participación del consumo exento del ISV"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-scripts allow-downloads allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/28006279/thumbnail" alt="Figura 6" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/28006279/)*
+
+```{python}
+#| label: fig6-code
+#| eval: false
+# Código de Figura 6 — pendiente de portar del notebook original
+```
+
+## Figura 7. Composición del Gasto Tributario en ISR Persona Jurídica, 2023 (millones de USD) {#sec-fig7}
+
+::: {.callout-warning collapse="true"}
+## ID de Flourish faltante
+El notebook original no incluye link a Flourish para esta figura. Confirmar si la visualización existe en Flourish o si solo aparece como gráfico estático en el PDF, y agregar `<iframe>` cuando corresponda.
+:::
+
+```{python}
+#| label: fig7-code
+#| eval: false
+# Código de Figura 7 — pendiente de portar del notebook original
+```
+
+# Exportación de resultados {#sec-export}
+
+> **Pendiente de portar.** Generación del archivo `data/output/gasto_tributario_honduras.xlsx`.
