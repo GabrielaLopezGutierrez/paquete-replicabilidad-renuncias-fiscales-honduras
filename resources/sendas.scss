@@ -1,169 +1,259 @@
 /*-- scss:defaults --*/
 
-$body-bg: #fafaf7;
+$body-bg: #ffffff;
 $body-color: #1a1a1a;
 $link-color: #b8341d;
 $link-hover-color: #8a2614;
+$link-decoration: none;
 
-$primary: #1a3a52;
-$secondary: #b8341d;
-$light: #f4f1ea;
+$primary: #1a1a1a;
+$secondary: #5f5e5a;
+$light: #f7f5f0;
 $dark: #1a1a1a;
 
-$font-family-sans-serif: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 $font-family-serif: "Source Serif 4", Georgia, serif;
 $font-family-monospace: "JetBrains Mono", "SF Mono", Menlo, monospace;
 
-$headings-font-family: "Source Serif 4", Georgia, serif;
-$headings-font-weight: 600;
-$headings-color: $primary;
+$headings-font-family: $font-family-sans-serif;
+$headings-font-weight: 500;
+$headings-color: #1a1a1a;
 
-$font-size-base: 1.05rem;
+$font-size-base: 1rem;
 $line-height-base: 1.65;
 
-$code-bg: #f4f1ea;
-$code-color: #1a3a52;
+$code-bg: #f7f5f0;
+$code-color: #1a1a1a;
 
-$sidebar-bg: #f4f1ea;
+$sidebar-bg: #ffffff;
 $sidebar-fg: #1a1a1a;
 
 /*-- scss:rules --*/
 
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
   font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
+  color: #1a1a1a;
 }
 
-h1, h2, h3, h4 { letter-spacing: -0.01em; }
+a {
+  border-bottom: 0.5px solid #b8341d;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
 
-h1.title { font-size: 2.5rem; line-height: 1.15; margin-bottom: 0.5rem; }
+a:hover {
+  border-bottom-color: #8a2614;
+}
+
+a.nav-link, a.navbar-brand, .sidebar a, .quarto-secondary-nav a, a.anchorjs-link, footer a, .toc-actions a, a.quarto-btn-action {
+  border-bottom: none;
+}
+
+h1.title {
+  font-family: $font-family-serif;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-family: $font-family-serif;
+  font-size: 1.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-family: $font-family-serif;
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-top: 2.5rem;
+}
+
+h3 {
+  font-family: $font-family-sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+
+h4, h5, h6 {
+  font-family: $font-family-sans-serif;
+  font-weight: 600;
+}
 
 .subtitle {
-  font-family: $font-family-serif;
-  font-style: italic;
-  font-size: 1.25rem;
-  color: #555;
+  font-family: $font-family-sans-serif;
+  font-size: 0.875rem;
+  color: #888780;
   font-weight: 400;
+  margin-top: 0;
 }
 
 .lead {
-  font-family: $font-family-serif;
-  font-size: 1.2rem;
-  line-height: 1.6;
-  color: #333;
+  font-family: $font-family-sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #2c2c2a;
+  max-width: 60ch;
+}
+
+.eyebrow {
+  font-family: $font-family-sans-serif;
+  font-size: 0.75rem;
+  color: #888780;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+}
+
+.proposal-banner {
+  background: #f7f5f0;
+  border-bottom: 0.5px solid #e8e4d8;
+  padding: 0.4rem 0;
+  font-size: 0.8125rem;
+  color: #5f5e5a;
+  text-align: center;
+  margin: 0 -100vw 1.5rem -100vw;
+  padding-left: 100vw;
+  padding-right: 100vw;
+}
+
+.proposal-banner strong {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.metadata-list {
+  margin: 1.5rem 0;
+  font-size: 0.9375rem;
+}
+
+.metadata-list dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+}
+
+.metadata-list dt {
+  color: #888780;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.metadata-list dd {
+  margin: 0;
+  color: #2c2c2a;
+}
+
+.citation-box {
+  background: #f7f5f0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  font-family: $font-family-monospace;
+  font-size: 0.85rem;
+  border-radius: 3px;
+  line-height: 1.55;
 }
 
 .flourish-embed {
   margin: 2rem 0;
-  border: 1px solid #e5e2db;
-  border-radius: 4px;
   background: white;
-  overflow: hidden;
 }
 
-.flourish-embed iframe { width: 100%; display: block; border: 0; }
+.flourish-embed iframe {
+  width: 100%;
+  display: block;
+  border: 0;
+}
 
-.figure-caption, .quarto-figure-caption {
-  font-family: $font-family-serif;
-  font-style: italic;
-  color: #555;
-  font-size: 0.95rem;
+.figure-caption,
+.quarto-figure-caption {
+  font-family: $font-family-sans-serif;
+  font-style: normal;
+  color: #888780;
+  font-size: 0.875rem;
   margin-top: 0.5rem;
 }
 
 pre.sourceCode {
-  border-left: 3px solid $secondary;
-  border-radius: 0 4px 4px 0;
+  border: 0.5px solid #e8e4d8;
+  border-left: 2px solid #b8341d;
+  border-radius: 0;
   padding-left: 1rem;
+  background: #fbfaf6;
+}
+
+code {
+  font-size: 0.9em;
 }
 
 .dataframe, table.dataframe {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-family: $font-family-monospace;
 }
 
-.metadata-table { font-size: 0.95rem; margin: 2rem 0; }
-
-.metadata-table td:first-child {
-  font-weight: 600;
-  color: $primary;
-  width: 30%;
-  white-space: nowrap;
+.callout {
+  border-left-width: 2px;
+  border-radius: 0;
 }
 
-.callout { border-left-width: 4px; }
-
-.citation-box {
-  background: $light;
-  border-left: 4px solid $primary;
-  padding: 1rem 1.25rem;
-  margin: 1.5rem 0;
-  font-family: $font-family-monospace;
-  font-size: 0.9rem;
-  border-radius: 0 4px 4px 0;
+.navbar {
+  border-bottom: 0.5px solid #e8e4d8;
+  background: #ffffff !important;
 }
 
-.proposal-banner {
-  background: #fef3e2;
-  border: 1px solid #f0c97a;
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
-  margin: 1rem 0 2rem;
-  font-size: 0.95rem;
-  color: #6b4a1a;
-}
-
-.proposal-banner strong { color: #4a3210; }
-
-.download-row {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin: 1.5rem 0;
-}
-
-.download-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  background: white;
-  border: 1px solid #d4cfc1;
-  border-radius: 4px;
-  color: $primary;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: all 0.15s ease;
-}
-
-.download-btn:hover {
-  background: $primary;
-  color: white;
-  border-color: $primary;
-  text-decoration: none;
-}
-
-.hero {
-  border-bottom: 1px solid #e5e2db;
-  padding-bottom: 2rem;
-  margin-bottom: 2.5rem;
-}
-
-.hero-eyebrow {
+.navbar-brand {
   font-family: $font-family-sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: $secondary;
-  margin-bottom: 0.75rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: #1a1a1a;
 }
 
-.navbar { border-bottom: 1px solid #e5e2db; }
-.navbar-brand { font-family: $font-family-serif; font-weight: 600; }
-.sidebar nav[role="doc-toc"] ul li a:hover { color: $secondary; }
+.nav-link {
+  font-size: 0.875rem;
+  color: #5f5e5a !important;
+}
 
-@media print { .flourish-embed { display: none; } }
+.nav-link.active, .nav-link:hover {
+  color: #1a1a1a !important;
+}
+
+.sidebar nav[role="doc-toc"] ul li a:hover,
+.sidebar a:hover {
+  color: #b8341d;
+}
+
+.sidebar a {
+  font-size: 0.875rem;
+}
+
+.sidebar a.active {
+  color: #b8341d !important;
+}
+
+.page-footer {
+  font-size: 0.8125rem;
+  color: #888780;
+  border-top: 0.5px solid #e8e4d8;
+  background: #ffffff !important;
+}
+
+article p {
+  max-width: 70ch;
+}
+
+.body-serif {
+  font-family: $font-family-serif;
+}
+
+@media print {
+  .flourish-embed { display: none; }
+}

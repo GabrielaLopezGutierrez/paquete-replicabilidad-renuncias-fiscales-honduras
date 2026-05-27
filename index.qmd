@@ -7,67 +7,40 @@ toc: false
 ---
 
 ::: {.proposal-banner}
-**Propuesta interna en revisión.** Este sitio se publica bajo el usuario personal de la autora mientras se evalúa con Sendas Think Tank el formato definitivo del paquete de replicabilidad. La versión oficial migrará al espacio institucional de la organización una vez aprobada.
+**Propuesta interna** · sitio publicado bajo cuenta personal mientras se revisa con Sendas Think Tank.
 :::
 
-::: {.hero}
+Entre 2017 y 2023, Honduras acumuló 12,500 millones de dólares en gasto tributario, una cifra similar a todo lo ejecutado en salud e inversión pública en ese período. La magnitud de estas renuncias, entre las más altas del mundo, exige un seguimiento sistemático de sus resultados antes de considerar ajustes en su diseño.
 
-::: {.hero-eyebrow}
-Análisis · Honduras · Política fiscal
-:::
-
-::: {.lead}
-Entre 2017 y 2023, Honduras acumuló 12,500 millones de dólares en gasto tributario —una cifra similar a todo lo ejecutado en salud e inversión pública en ese período. La magnitud de estas renuncias fiscales, entre las más altas del mundo, exige primero un seguimiento sistemático de sus resultados y, a partir de ellos, considerar ajustes en su diseño.
-:::
-
-::: {.download-row}
-[📄 Publicación](https://www.sendas.org/en/publications/renuncias-fiscales-sin-seguimiento){.download-btn}
-[📊 Análisis interactivo](analisis.qmd){.download-btn}
-[📓 Descargar notebook](analisis.ipynb){.download-btn}
-[📑 Documentación (PDF)](docs/documentacion.pdf){.download-btn}
-[🗂 Resultados (XLSX)](data/output/gasto_tributario_honduras.xlsx){.download-btn}
-:::
-
-:::
+Este sitio reúne el código, los datos y la documentación que acompañan la [publicación original](https://www.sendas.org/en/publications/renuncias-fiscales-sin-seguimiento). Podés [leer el análisis interactivo](analisis.qmd), [descargar el notebook](analisis.ipynb), consultar la [documentación en PDF](docs/documentacion.pdf), o bajar las [tablas de resultados en XLSX](data/output/gasto_tributario_honduras.xlsx).
 
 ## Sobre este paquete
 
-Este sitio acompaña la publicación *Renuncias fiscales sin seguimiento* y reúne todo lo necesario para auditar y reproducir el análisis: el código ejecutable, los datos de entrada, las tablas de salida y la documentación metodológica. Las siete figuras del informe se presentan junto con la visualización interactiva (Flourish), el código que las genera y los datos que las alimentan.
+Las siete figuras del informe se presentan junto con la visualización interactiva (Flourish), el código que las genera y los datos que las alimentan. Hay dos formas de usar el paquete:
 
-Hay dos formas de usar el paquete según para qué llegaste:
+Si querés **leer el análisis**, andá a [Análisis](analisis.qmd). Vas a ver el texto, las figuras interactivas y, debajo de cada una, el código que las produce (plegado por defecto). No requiere instalar nada.
 
-**Si querés leer el análisis** —periodistas, lectores de política pública, donantes— andá a [Análisis](analisis.qmd). Vas a ver el texto, las figuras interactivas y, debajo de cada una, el código que las produce (plegado por defecto). No necesitás instalar nada.
-
-**Si querés replicar o auditar** —investigadores, equipos técnicos— mirá [Cómo replicar](replicar.qmd) para el setup, o descargá el notebook directamente con el botón de arriba.
+Si querés **replicar o auditar**, mirá [Cómo replicar](replicar.qmd) para el setup, o descargá el notebook directamente.
 
 ## Ficha técnica
 
-::: {.metadata-table}
-
-|   |   |
-|---|---|
-| **Documento original** | [Renuncias fiscales sin seguimiento](https://www.sendas.org/en/publications/renuncias-fiscales-sin-seguimiento) |
-| **Autora** | Gabriela López Gutiérrez |
-| **Afiliación** | Sendas Think Tank |
-| **Contacto** | [gabriela@sendas.org](mailto:gabriela@sendas.org) · [economic-team@sendas.org](mailto:economic-team@sendas.org) |
-| **Última actualización del análisis** | 6 de mayo de 2026 |
-| **Período de datos** | 2017 – 2023 |
-| **Fecha de descarga de fuentes** | 25 de febrero de 2026 |
-| **Entorno de ejecución** | Python 3.11 (Google Colab compatible) |
-| **Licencia del análisis** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
-| **Licencia del código** | [MIT](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/blob/main/LICENSE) |
-
+::: {.metadata-list}
+<dl>
+<dt>Documento</dt><dd>[Renuncias fiscales sin seguimiento](https://www.sendas.org/en/publications/renuncias-fiscales-sin-seguimiento)</dd>
+<dt>Autora</dt><dd>Gabriela López Gutiérrez</dd>
+<dt>Afiliación</dt><dd>Sendas Think Tank</dd>
+<dt>Contacto</dt><dd>[gabriela@sendas.org](mailto:gabriela@sendas.org) · [economic-team@sendas.org](mailto:economic-team@sendas.org)</dd>
+<dt>Período</dt><dd>2017 – 2023</dd>
+<dt>Actualización</dt><dd>6 de mayo de 2026</dd>
+<dt>Descarga de fuentes</dt><dd>25 de febrero de 2026</dd>
+<dt>Entorno</dt><dd>Python 3.11 (Google Colab compatible)</dd>
+<dt>Licencia</dt><dd>[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (análisis) · [MIT](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/blob/main/LICENSE) (código)</dd>
+</dl>
 :::
 
 ## Fuentes de datos
 
-El análisis combina cinco fuentes externas. Ver [Fuentes y licencias](fuentes.qmd) para detalles de cada una.
-
-- **Global Tax Expenditure Database (GTED)** — Council on Economic Policies & German Institute of Development and Sustainability
-- **World Bank Country and Lending Groups** — clasificación por nivel de ingreso
-- **UNU-WIDER Government Revenue Dataset (GRD)** — recaudación tributaria comparativa
-- **ENIGH 2023-2024** — Banco Central de Honduras, microdatos de gasto de hogares
-- **OECD Revenue Statistics in Latin America and the Caribbean** — recaudación Honduras
+El análisis combina cinco fuentes externas. Ver [Fuentes y licencias](fuentes.qmd) para detalles de cada una: Global Tax Expenditure Database (GTED), World Bank Country and Lending Groups, UNU-WIDER Government Revenue Dataset, ENIGH 2023-2024 del Banco Central de Honduras, y OECD Revenue Statistics in Latin America and the Caribbean.
 
 ## Cómo citar
 
@@ -77,4 +50,4 @@ López Gutiérrez, G. (2026). *Renuncias fiscales sin seguimiento: gasto tributa
 
 ## Reportar un error o sugerir una mejora
 
-Si encontrás un problema con los datos, el código o la documentación, abrí un issue en [GitHub](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/issues). Para correcciones sustantivas al análisis, escribí a [economic-team@sendas.org](mailto:economic-team@sendas.org).
+Si encontrás un problema con los datos, el código o la documentación, abrí un [issue en GitHub](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/issues). Para correcciones sustantivas al análisis, escribí a [economic-team@sendas.org](mailto:economic-team@sendas.org).
