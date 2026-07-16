@@ -1,0 +1,11 @@
+Quintil de ingreso,Consumo exento de ISV (% del consumo total del quintil)
+1 Quintil,40.05952519
+2 Quintil,40.29861393
+3 Quintil,39.73542364
+4 Quintil,39.1134047
+5 Quintil,36.87407504
+DESCRIPCIÓN,"Para cada quintil de ingreso disponible per cápita (sin ingreso por donaciones de capital propio), se calcula la proporción del consumo mensual que está clasificado como exento del ISV. Se utilizan los microdatos de gasto de hogares de la ENIGH 2023–2024 (BCH), con clasificación tributaria por código CCIFH-2018 codificada por Sendas en la tabla auxiliar status2024.xlsx."
+LECTURA,"Al menos un 40 % del consumo de los hogares de menores ingresos está exento de ISV. La diferencia entre quintiles es modesta (aprox. 37–40 %), lo que sugiere que la exención no está focalizada en función del nivel de ingreso del hogar."
+VISUALIZACIÓN,https://public.flourish.studio/visualisation/26724362/
+NOTA,Cifras preliminares: la clasificación de productos en categorías exentas y gravadas se encuentra actualmente en proceso de revisión técnica. Los valores se basan en el factor de expansión de la ENIGH y excluyen el alquiler imputado.
+Para consultas: gabriela@sendas.org · econ@sendas.org  |  sendas.org,

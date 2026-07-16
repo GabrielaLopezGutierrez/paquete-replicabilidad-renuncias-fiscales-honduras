@@ -1,0 +1,11 @@
+Grupo de ingreso,Aranceles (DAI),Selectivo al consumo (ISC),ISR personas jurídicas,ISR personas naturales,Ventas (ISV),Otros ligados a ISV,Total impuestos al consumo,Total impuestos a la renta,Total general
+HND,7.065436262542506,16.74435788089791,42.80959250592506,27.54495939860041,52.78667328973368,,36.42288817645661,23.70628344797464,30.60925048868278
+Ingreso alto,21.93701692041956,9.728840224152213,16.59348399809904,32.56951360756161,24.39138478669823,6318.617270925251,18.22321761999678,11.86279021006406,14.79665655417925
+Ingreso bajo,275.8861776934265,22.13022046077343,9.023584284728848,3.401680492640901,16.6774436520221,2.083096995159632,27.21962324345138,8.651454606836076,17.25821254734787
+Ingreso medio alto,20.43892660650942,19.24249344613622,13.97523034650658,27.6029305400035,24.90965572081582,1239.831195257432,19.71974963964493,9.222560467854782,16.47707510257596
+Ingreso medio bajo,28.06832403168473,10.30418389491774,8.778699139201134,16.25040663030997,30.32112587544952,35.10419651236633,25.73490837795956,11.54719751134191,17.0330723770685
+DESCRIPCIÓN,"Cruza el gasto tributario (GTED) con la recaudación efectiva (UNU-WIDER Government Revenue Dataset) para 2022. La métrica ""intensidad"" se define como gasto_tributario / recaudación × 100 y mide cuántos puntos de recaudación equivale el gasto tributario en cada categoría. Honduras se reporta individualmente; los demás grupos son promedios simples por nivel de ingreso del Banco Mundial.",,,,,,,,
+LECTURA,"Por cada 100 dólares que recauda, Honduras renuncia a 30 en gasto tributario; el doble que otros países. Aunque para todos el gasto tributario se concentra más en el consumo que en la renta, la erosión hondureña es mayor en ambos casos. Destaca especialmente en el ISV (53 %) y en el impuesto sobre la renta de personas jurídicas (43 %), niveles muy superiores a los observados en otros países.",,,,,,,,
+VISUALIZACIÓN,https://public.flourish.studio/story/3603248/,,,,,,,,
+NOTA,"Los valores extremos en columnas como Aranceles (DAI) u Otros ligados al ISV reflejan denominadores muy variables entre países, por lo que deben interpretarse con cautela.",,,,,,,,
+Para consultas: gabriela@sendas.org · econ@sendas.org  |  sendas.org,,,,,,,,,

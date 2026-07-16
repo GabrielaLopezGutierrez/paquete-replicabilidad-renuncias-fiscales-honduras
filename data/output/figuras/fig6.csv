@@ -1,0 +1,11 @@
+Quintil de ingreso,Participación en el consumo exento total (%)
+1 Quintil,10.88826862
+2 Quintil,15.02402511
+3 Quintil,18.83620521
+4 Quintil,22.65581143
+5 Quintil,32.59568963
+DESCRIPCIÓN,Para cada quintil se calcula qué porcentaje del consumo exento total a nivel nacional captura. Es una medida de distribución del beneficio fiscal del ISV: cuánto del subsidio implícito en las exenciones absorbe cada quintil de la población. Construida a partir de los microdatos de la ENIGH 2023–2024 con clasificación tributaria por código CCIFH-2018.
+LECTURA,"Aunque las exenciones del ISV tienen como objetivo aliviar la carga sobre los hogares vulnerables, el 33 % del beneficio se concentra en el quintil más rico, frente al 11 % del quintil más pobre. Las exenciones no son el problema en sí, sino su falta de focalización."
+VISUALIZACIÓN,https://public.flourish.studio/visualisation/26722987/
+NOTA,Cifras preliminares: la clasificación de productos en categorías exentas y gravadas se encuentra actualmente en proceso de revisión técnica. Los valores se basan en el factor de expansión de la ENIGH.
+Para consultas: gabriela@sendas.org · econ@sendas.org  |  sendas.org,

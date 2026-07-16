@@ -1,0 +1,20 @@
+Año,Tipo de impuesto,Honduras,Ingreso alto,Ingreso bajo,Ingreso medio alto,Ingreso medio bajo
+2017,Impuesto sobre el Consumo,4.646275416219638,2.106995748388282,1.386122291932556,1.999315327782122,2.411871228624062
+2017,Impuesto sobre la Renta,2.16229943522579,3.046589399852227,0.2492526450690988,1.014592041740961,0.787936852701704
+2018,Impuesto sobre el Consumo,4.286571003937179,2.055789148192639,1.563129984628953,2.445508593464538,2.347397537516468
+2018,Impuesto sobre la Renta,2.676934041388182,2.807018463485571,0.2190022832615951,0.9352051362232867,0.655428809037712
+2019,Impuesto sobre el Consumo,4.595839475785755,1.925615971203984,1.57949887838776,2.601879204801298,2.437091488059023
+2019,Impuesto sobre la Renta,2.222810731568133,2.923199938777777,0.2634398628126711,0.8927704299577875,0.6137510897735697
+2020,Impuesto sobre el Consumo,4.680170200643856,2.213485020810713,1.298306437680247,2.639499724993545,2.423829671782987
+2020,Impuesto sobre la Renta,2.241114761637651,3.12675118727191,0.3983386720034712,1.124772235788351,0.6372415522772277
+2021,Impuesto sobre el Consumo,4.695672500085068,2.060678082292468,1.546910979734436,2.710313744247626,2.63576418169558
+2021,Impuesto sobre la Renta,2.665234572065574,3.216326240886767,0.4240245198059625,1.113667960555286,0.7764307635959224
+2022,Impuesto sobre el Consumo,4.26846733047951,2.157219050105814,1.699461659906885,2.601189063595509,2.22501773695896
+2022,Impuesto sobre la Renta,2.339771330250788,3.223819755965797,0.396554763947869,0.9865381044870588,0.6953103583787615
+2023,Impuesto sobre el Consumo,4.572537926454758,1.80310379038001,1.977345103858808,2.459408545478491,1.800995328639062
+2023,Impuesto sobre la Renta,1.928491839269109,3.224127276497034,0.6058850439459355,0.8476426245796835,0.482930373629949
+DESCRIPCIÓN,Promedio anual de gasto tributario (% del PIB) desagregado en dos tipos: Impuesto sobre el Consumo e Impuesto sobre la Renta. Honduras se reporta como serie individual; los demás grupos representan el promedio simple de los países que integran cada nivel de ingreso del Banco Mundial. Los impuestos sobre la propiedad se excluyen para mantener comparabilidad.,,,,,
+LECTURA,"En impuestos sobre el consumo, Honduras destinó en promedio 4.5 % del PIB anual, entre dos y cinco veces más que otras economías. En impuestos sobre la renta promedió 2 % del PIB, casi el doble que la mayoría de los grupos.",,,,,
+VISUALIZACIÓN,https://public.flourish.studio/visualisation/26652611/,,,,,
+NOTA,"Consumo: tributos que el Estado deja de cobrar sobre la compra de bienes y servicios. Renta: tributos que el Estado deja de cobrar sobre ingresos por salarios, inversiones, capital u otras fuentes.",,,,,
+Para consultas: gabriela@sendas.org · econ@sendas.org  |  sendas.org,,,,,,

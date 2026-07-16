@@ -1,0 +1,13 @@
+Año,ISR personas jurídicas,ISR personas naturales,Ventas (ISV),Aranceles (DAI),Selectivo al consumo (ISC)
+2017,43.13500510671396,19.32051963558177,57.21631719125367,12.62832415306,13.81924320167299
+2018,56.54114265815671,12.60527116726746,50.89714335512218,8.71872436366134,18.31176787097746
+2019,48.97939292772296,19.42879526687571,56.45061769627859,9.166269558508112,18.61752859759144
+2020,75.70002527026381,17.69979213538754,65.5335788500063,15.47408758301278,18.51022556947254
+2021,65.34756343921431,30.32731476877106,57.8093091358236,8.508256261340952,14.02004257040997
+2022,42.80959189314207,27.54495937656301,52.78667243401385,7.065436432608381,16.74435731601551
+2023,41.65636449553613,20.97940057439981,54.06767221681336,5.324222877737125,20.06488572098724
+DESCRIPCIÓN,"Cruza el gasto tributario reportado por GTED con la recaudación efectiva según la OCDE para Honduras. La métrica de erosión se define como gasto_tributario / recaudación efectiva por tipo de impuesto, expresada en porcentaje. La equivalencia entre las categorías GTED y OCDE se codifica en la tabla auxiliar unu_taxRevenueToExpenditure_dic.xlsx.",,,,
+LECTURA,"Históricamente, el ISV y el ISR a personas jurídicas (ISRPJ) son los conceptos más erosionados: por cada 100 dólares recaudados se destina la mitad a beneficios e incentivos fiscales en estos rubros. Durante la pandemia (2020–2021) la recaudación cayó mientras el gasto tributario se mantuvo estable, intensificando la erosión relativa. Los demás mecanismos se mantienen en niveles menores al 30 %.",,,,
+VISUALIZACIÓN,https://public.flourish.studio/visualisation/27999833/,,,,
+NOTA,"Los valores expresan la razón gasto tributario / recaudación efectiva en porcentaje. El cambio relativo durante la pandemia refleja en parte el efecto denominador (caída de recaudación), no necesariamente un aumento en el gasto tributario en términos absolutos.",,,,
+Para consultas: gabriela@sendas.org · econ@sendas.org  |  sendas.org,,,,,
