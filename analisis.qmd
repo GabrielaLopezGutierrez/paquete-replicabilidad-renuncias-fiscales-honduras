@@ -18,36 +18,240 @@ ipynb-shell-interactivity: all
 ::: {.callout-note collapse="true"}
 ## Sobre esta página
 
-Cada figura se presenta con cuatro elementos: la **prosa** que la contextualiza, el **código Python** que la genera (plegado por defecto), la **visualización interactiva** en Flourish, y la **tabla de datos** que la alimenta (también plegable, con opción de descarga en CSV). Podés descargar el notebook completo con el botón ⤓ arriba a la derecha.
+Cada figura se presenta con cuatro elementos: la **prosa** que la contextualiza, el **código Python** que la genera (plegado por defecto), la **visualización interactiva** en Flourish, y la **tabla de datos** que la alimenta (también plegable, con opción de descarga en CSV). Podés descargar el notebook completo con el botón ⤓ arriba a la derecha, o ver el archivo `.qmd` fuente en [GitHub](https://github.com/GabrielaLopezGutierrez/paquete-replicabilidad-renuncias-fiscales-honduras/blob/main/analisis.qmd).
 :::
 
 # Configuración {#sec-config}
 
+Importación de dependencias, definición de rutas, constantes globales y verificación de que los archivos de entrada esperados existan.
+
 ```{python}
 #| label: setup
+#| eval: false
 import os, numpy as np, pandas as pd
 
-USE_DRIVE  = False
-DRIVE_PATH = '***ADD DRIVE PATH***'
+# ── Entorno de ejecución ─────────────────────────────────────────────────────
+# Cambiar a True si se ejecuta en Colab con datos en Shared Drive.
+#USE_DRIVE  = True
+#DRIVE_PATH = '***ADD DRIVE PATH***'
+
+USE_DRIVE  = True
+DRIVE_PATH = '/content/drive/Shareddrives/Sendas Economic Team/04_Products & Tech/03_Infobytes/02_content/15_renuncias_fiscales/Datos&Analisis'
 
 if USE_DRIVE:
     from google.colab import drive
     drive.mount('/content/drive')
-    BASE = DRIVE_PATH
+    DATA_ROOT = DRIVE_PATH
 else:
-    BASE = os.path.dirname(os.path.abspath('.'))
+    DATA_ROOT = './'   # ajustar a la raíz del proyecto si difiere
 
-def path(rel):
-    return os.path.join(BASE, rel) if USE_DRIVE else rel
+# Subcarpetas: 'raw' = fuentes externas (no versionadas) · 'auxiliary' = tablas Sendas (versionadas)
+RAW = 'data/input/raw'
+AUX = 'data/input/auxiliary'
+OUT = 'data/output'
 
-YEAR_MIN, YEAR_MAX = 2017, 2023
+# Instalar calamine sólo si no está disponible (acelera lectura de .xlsx)
+try:
+    import python_calamine  # noqa: F401
+except ImportError:
+    import subprocess, sys
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', 'python-calamine'], check=True)
+
+def path(*parts):
+    return os.path.join(DATA_ROOT, *parts)
+
+# ── Constantes globales ──────────────────────────────────────────────────────
+GTED_VERSION  = '20251010'                       # cambiar al actualizar la base GTED
 FOCAL_COUNTRY = 'HND'
-INCOME_ORDER = ['Low income', 'Lower middle income', 'Upper middle income', 'High income']
+YEAR_MIN      = 2017
+YEAR_MAX      = 2023
+ANALYSIS_YEAR = 2022
+INCOME_ORDER  = ['Ingreso alto', 'Ingreso medio alto', 'Ingreso medio bajo', 'Ingreso bajo']
+
+# Nombres de columnas traducidas (reutilizados en múltiples secciones)
+CAT1  = 'Tipo de Impuesto - Categoria 1'
+CAT2  = 'Tipo de Impuesto - Categoria 2'
+CAT2A = 'Tipo de Impuesto - Cat2 (abrev)'
+TAX_TYPES = ['Total impuestos al consumo', 'Total impuestos a la renta']
+
+# ── Verificación de archivos esperados ───────────────────────────────────────
+EXPECTED_FILES = [
+    # Fuentes primarias (raw)
+    f'{RAW}/GTED_WB/GTED_FullDatabase_{GTED_VERSION}.xlsx',
+    f'{RAW}/GTED_WB/c_wb_incomeg.xlsx',
+    f'{RAW}/Recaudacion_Tributaria_UNU_OCDE/UNUWIDERGRD_2025_Full.xlsx',
+    f'{RAW}/Recaudacion_Tributaria_UNU_OCDE/OECD_revenueHN.xlsx',
+    f'{RAW}/ENIGH/GASTOS_ENIGH_HN.csv',
+    # Tablas auxiliares de Sendas
+    f'{AUX}/translations.xlsx',
+    f'{AUX}/unu_taxRevenueToExpenditure_dic.xlsx',
+    f'{AUX}/status2024.xlsx',
+    f'{AUX}/ISRPJ_Descripción.xlsx',
+]
+missing = [f for f in EXPECTED_FILES if not os.path.exists(path(f))]
+if missing:
+    raise FileNotFoundError(
+        'Archivos faltantes bajo DATA_ROOT={}:\n  - '.format(DATA_ROOT)
+        + '\n  - '.join(missing)
+    )
+print(f'Entorno OK · DATA_ROOT={DATA_ROOT} · {len(EXPECTED_FILES)} archivos verificados')
 ```
 
 # Carga y preparación de datos {#sec-carga}
 
-> **Pendiente de portar del notebook original.** Carga de GTED + WB, UNU-WIDER, ENIGH y OCDE.
+Se cargan las cuatro fuentes primarias (GTED, World Bank, UNU-WIDER, ENIGH, OCDE), se traducen las categorías y se construyen los `DataFrames` de trabajo reutilizados en todas las figuras.
+
+::: {.callout-note collapse="true"}
+## Nota de replicabilidad
+
+Los archivos de entrada se separan en dos categorías:
+
+- **`raw/`** — fuentes externas en su forma original. Deben descargarse desde el origen según instrucciones en [Fuentes y licencias](fuentes.qmd).
+- **`auxiliary/`** — tablas puente construidas por Sendas que codifican decisiones metodológicas (clasificaciones, traducciones, descripciones). Versionadas directamente en el repo.
+:::
+
+## GTED y Banco Mundial {#sec-gted}
+
+Se lee la base completa de GTED (provisiones + ingreso renunciado), se cruza con la clasificación de ingreso del Banco Mundial y se traducen las categorías tributarias al español.
+
+```{python}
+#| label: gted-wb
+#| eval: false
+# ── Función auxiliar: lee translations.xlsx una sola vez y devuelve mappings ──
+_TRANSLATIONS_FILE = pd.ExcelFile(path(AUX, 'translations.xlsx'))
+
+def load_translation(sheet, index_col, value_col):
+    """Devuelve un dict {original: traducción} desde una hoja de translations.xlsx."""
+    return (pd.read_excel(_TRANSLATIONS_FILE, sheet_name=sheet)
+              .set_index(index_col)[value_col].to_dict())
+
+# ── GTED: provisiones + ingreso renunciado ───────────────────────────────────
+gted_file = path(RAW, 'GTED_WB', f'GTED_FullDatabase_{GTED_VERSION}.xlsx')
+df_meta   = pd.read_excel(gted_file, sheet_name='TEProvisions',   engine='calamine')
+df_rf     = pd.read_excel(gted_file, sheet_name='RevenueForgone', engine='calamine')
+
+# TEProvisions usa 'Provision ID' (con espacio); RevenueForgone usa 'ProvisionID'
+df_meta = df_meta.rename(columns={'Provision ID': 'ProvisionID'})
+df_gted = df_rf.merge(df_meta.astype({'ProvisionID': str}), on='ProvisionID', how='left')
+
+# ── Banco Mundial: grupo de ingreso, país, región ────────────────────────────
+# Los nombres de columna se asignan ya con su forma final de presentación.
+wb = pd.read_excel(path(RAW, 'GTED_WB', 'c_wb_incomeg.xlsx'))
+wb['Grupo de ingreso']  = wb['Income group'].map(load_translation('IncomeLevel', 'Income level (English)', 'Nivel de ingreso (Español)'))
+wb['País']              = wb['Economy'].map(load_translation('Economy', 'Economy (English)', 'Economía (Español)'))
+wb['Región']            = wb['Economy'].map(load_translation('Economy', 'Economy (English)', 'Continente (Español)'))
+
+# ── Unir GTED + Banco Mundial por código ISO-3 ───────────────────────────────
+# 'Country' en GTED y 'Code' en WB son ambos ISO-3 → renombrar a 'País (ISO-3)'.
+# 'Year' en GTED → renombrar a 'Año' (consistente con el resto del análisis).
+df_db = (df_gted
+         .merge(wb[['Code', 'País', 'Región', 'Grupo de ingreso']],
+                left_on='Country', right_on='Code', how='left')
+         .rename(columns={'Country': 'País (ISO-3)'})
+         .query('Year <= 2024'))
+
+# ── Traducir variables categóricas de GTED ───────────────────────────────────
+TRANSLATIONS = [
+    ('Método de estimación', 'Estimation method',  'EstimationMethod', 'Method (English)',  'Método (Español)'),
+    (CAT1,                    'Tax type - Level 1', 'TaxTypeLevel1',    'TT_lvl1 (English)', 'TT_lvl1 (Español)'),
+    (CAT2,                    'Tax type - Level 2', 'TaxTypeLevel2',    'TT_lvl2 (English)', 'TT_lvl2 (Español)'),
+    (CAT2A,                   'Tax type - Level 2', 'TaxTypeLevel2',    'TT_lvl2 (English)', 'TT_lvl2_abrev'),
+]
+for new_col, src_col, sheet, idx, val in TRANSLATIONS:
+    df_db[new_col] = df_db[src_col].map(load_translation(sheet, idx, val))
+
+# ── Tabla de metadatos por país (usada en todas las secciones) ───────────────
+meta_cols = df_db[['País (ISO-3)', 'País', 'Región', 'Grupo de ingreso', 'Método de estimación']].drop_duplicates('País (ISO-3)')
+
+# ── Honduras: subconjunto de trabajo para secciones 3–4 ──────────────────────
+hnd = df_db[df_db['País (ISO-3)'] == FOCAL_COUNTRY].copy()
+print(f"GTED: {df_db.shape[0]:,} registros · {df_db['País (ISO-3)'].nunique()} países · {df_db['Year'].min()}–{df_db['Year'].max()}")
+```
+
+## UNU-WIDER GRD {#sec-unu}
+
+Recaudación tributaria comparada por país, para calcular la intensidad del gasto tributario respecto a la recaudación efectiva (Figura 3).
+
+```{python}
+#| label: unu-wider
+#| eval: false
+# ── Diccionario UNU-WIDER → categorías GTED ─────────────────────────────────
+unu_map      = pd.read_excel(path(AUX, 'unu_taxRevenueToExpenditure_dic.xlsx'),
+                             sheet_name='select_gted_unu')
+TAX_COLS_UNU = unu_map['unu'].tolist()
+unu_rename   = unu_map.set_index('unu')['gted'].to_dict()
+level_map    = unu_map.set_index('gted')['level'].to_dict()
+
+# ── UNU-WIDER GRD ────────────────────────────────────────────────────────────
+unu_raw = pd.read_excel(path(RAW, 'Recaudacion_Tributaria_UNU_OCDE', 'UNUWIDERGRD_2025_Full.xlsx'),
+                        sheet_name='Merged', header=[0, 1, 2], engine='calamine')
+
+# Aplanar encabezado multinivel: unir niveles no-vacíos con '_'
+unu_raw.columns = [
+    '_'.join(str(l).replace(' ', '') for l in col if l and 'Unnamed' not in str(l))
+    for col in unu_raw.columns
+]
+
+# ── Honduras 2017–2022 en formato largo (usado en secciones 3–4) ─────────────
+hnd_unu = (
+    unu_raw[unu_raw['ISO'] == FOCAL_COUNTRY][['Year', 'ISO'] + TAX_COLS_UNU]
+    .rename(columns=unu_rename)
+    .set_index('ISO').reset_index()
+    .melt(id_vars=['ISO', 'Year'], var_name='gted_category', value_name='tax_revenue')
+    .assign(tax_revenue=lambda x: x['tax_revenue'] * 100)
+    .query('Year >= @YEAR_MIN and Year <= 2022')
+)
+
+print(f'UNU-WIDER: {unu_raw.shape[0]:,} registros · {len(TAX_COLS_UNU)} categorías de impuesto')
+```
+
+## ENIGH, OCDE y auxiliares {#sec-enigh}
+
+Microdatos de gasto de los hogares hondureños con su clasificación tributaria (Figuras 5–6), recaudación efectiva por categoría según la OCDE (Figura 4), y descripciones de los regímenes ISR Persona Jurídica (Figura 7).
+
+```{python}
+#| label: enigh-ocde
+#| eval: false
+# ── ENIGH 2023-2024: microdatos de gasto + clasificación tributaria ──────────
+enigh = pd.read_csv(path(RAW, 'ENIGH', 'GASTOS_ENIGH_HN.csv'))
+
+# Columnas de gasto vienen como string en el CSV: coercionar a numérico
+for c in ['GASTO_CONSUMO_MENS_SINALQUI', 'GASTO_CONSUMO_MENS']:
+    enigh[c] = pd.to_numeric(enigh[c], errors='coerce')
+
+# Clasificación tributaria por código CCIFH-2018 (Exento / No Exento)
+clasif = (pd.read_excel(path(AUX, 'status2024.xlsx'),
+                        sheet_name='CCIFH_2018_ENIGH', header=6)
+            .rename(columns={'CCIFH-2018': 'CCIFH', 'Tipo Producto': 'exento'})
+            [['CCIFH', 'exento']]
+            .drop_duplicates(subset='CCIFH'))
+
+# Merge por código + filtro a consumo final (TIPO_GASTO == 1)
+enigh = (enigh.merge(clasif, on='CCIFH', how='left')
+              .query('TIPO_GASTO == 1')
+              .copy())
+
+print(f"ENIGH: {enigh.shape[0]:,} registros · {enigh['exento'].notna().sum():,} con clasificación tributaria")
+
+# ── OCDE: recaudación efectiva por categoría de impuesto ─────────────────────
+# Fuente: OCDE Revenue Statistics in Latin America and the Caribbean
+oecd = (pd.read_excel(path(RAW, 'Recaudacion_Tributaria_UNU_OCDE', 'OECD_revenueHN.xlsx'))
+        .pivot_table(index='TIME_PERIOD', columns='Revenue category', values='OBS_VALUE', aggfunc='first')
+        .rename_axis('Year')
+        .sort_index())
+oecd = oecd.loc[:, oecd.sum() != 0]    # eliminar columnas vacías
+
+print(f'OCDE:  {oecd.shape[0]} años · {oecd.shape[1]} categorías de recaudación')
+
+# ── Diccionario GTED ↔ OCDE (puente para Figura 4) ───────────────────────────
+gted_ocde = pd.read_excel(path(AUX, 'unu_taxRevenueToExpenditure_dic.xlsx'),
+                          sheet_name='gted_ocde')
+print(f'GTED↔OCDE: {gted_ocde.shape[0]} categorías mapeadas')
+
+# ── Descripciones de regímenes ISR-Persona Jurídica para Figura 7 ────────────
+isrpj_desc = pd.read_excel(path(AUX, 'ISRPJ_Descripción.xlsx'), sheet_name='regimenes_isrpj')
+print(f'ISRPJ descripciones: {isrpj_desc.shape[0]} regímenes')
+```
 
 # Análisis comparativo del gasto tributario {#sec-comparativo}
 
@@ -55,12 +259,14 @@ Las figuras 1–3 comparan a Honduras con sus pares por nivel de ingreso del Ban
 
 ## Figura 1. Gasto tributario por clasificación de ingresos {#sec-fig1}
 
-Último valor no nulo disponible de `RF % of GDP` por país dentro del período 2017–2023. Se excluyen países sin clasificación de ingreso del Banco Mundial.
+Último valor no nulo disponible de `RF % of GDP` por país dentro del período 2017–2023. Se excluyen países sin clasificación de ingreso del Banco Mundial. Honduras aparece entre las economías de ingreso medio-bajo con uno de los niveles más altos de gasto tributario relativo al PIB.
 
 ```{python}
 #| label: fig1-code
 #| eval: false
+# ── Pivot anual y extracción del último valor válido por país ────────────────
 def last_valid(row, require_nonzero=False):
+    """Devuelve (último valor, año correspondiente) o (None, None) si no hay datos."""
     mask = row.notna() & (row != 0) if require_nonzero else row.notna()
     return (row[mask].iloc[-1], row[mask].index[-1]) if mask.any() else (None, None)
 
@@ -79,12 +285,11 @@ fig1 = (
         'Grupo de ingreso': lambda df: pd.Categorical(df['Grupo de ingreso'], categories=INCOME_ORDER, ordered=True),
     })
     .sort_values('Grupo de ingreso')
-    [['País (ISO-3)', 'País', 'Región', 'Grupo de ingreso', 'Método de estimación',
-      'Gasto tributario (% PIB)', 'Año del dato']]
+    [['País (ISO-3)', 'País', 'Región', 'Grupo de ingreso', 'Método de estimación', 'Gasto tributario (% PIB)', 'Año del dato']]
 )
 
-fig1.to_csv('data/output/figuras/fig1.csv', index=False)
-fig1
+print(f"Países incluidos: {len(fig1)} · {FOCAL_COUNTRY} incluido: {FOCAL_COUNTRY in fig1['País (ISO-3)'].values}")
+display(fig1)
 ```
 
 ::: {.flourish-embed}
@@ -93,7 +298,7 @@ fig1
         frameborder="0" scrolling="no"
         sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style="width:100%;height:600px;"></iframe>
-<noscript><img src="https://public.flourish.studio/visualisation/26648679/thumbnail" alt="Figura 1" /></noscript>
+<noscript><img src="https://public.flourish.studio/visualisation/26648679/thumbnail" alt="Figura 1: Gasto tributario por clasificación de ingresos" /></noscript>
 :::
 
 *Fuente: elaboración propia con base en GTED y World Bank Country and Lending Groups. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26648679/)*
@@ -119,12 +324,38 @@ pd.read_csv('data/output/figuras/fig1.csv')
 
 ## Figura 2. Comparativo del gasto tributario por tipo de impuesto {#sec-fig2}
 
-Promedio anual del gasto tributario desagregado en consumo y renta para cada grupo de ingreso. Honduras se incluye como grupo independiente.
+Promedio anual del gasto tributario desagregado en consumo y renta para cada grupo de ingreso, 2017–2023. Honduras se incluye como grupo independiente.
 
 ```{python}
 #| label: fig2-code
 #| eval: false
-# Código de Figura 2 — pendiente de portar del notebook original
+# ── Formato largo: país × tipo de impuesto (cat-1) × año ─────────────────────
+w_tt_long = (
+    df_db
+    .pivot_table(index=['País (ISO-3)', CAT1], columns='Year', values='RF % of GDP', aggfunc='sum')
+    .reset_index()
+    .merge(meta_cols[['País (ISO-3)', 'Grupo de ingreso']], on='País (ISO-3)', how='left')
+    .melt(id_vars=['País (ISO-3)', CAT1, 'Grupo de ingreso'], var_name='Year', value_name='Value')
+    .query("@YEAR_MIN <= Year <= @YEAR_MAX and `Tipo de Impuesto - Categoria 1` != 'c. Impuesto sobre la Propiedad'")
+)
+
+# ── Promedio anual por nivel de ingreso + Honduras como grupo aparte ──────────
+avg_income = w_tt_long.groupby(['Grupo de ingreso', 'Year', CAT1])['Value'].mean().reset_index()
+
+hnd_tt = (w_tt_long.query("`País (ISO-3)` == @FOCAL_COUNTRY")
+          .groupby(['Year', CAT1])['Value'].sum().reset_index()
+          .assign(**{'Grupo de ingreso': 'Honduras'}))
+
+fig2 = (
+    pd.concat([avg_income, hnd_tt], ignore_index=True)
+    .query(f"`{CAT1}`.isin(@TAX_TYPES)", engine='python')
+    .pivot_table(index=['Year', CAT1], columns='Grupo de ingreso', values='Value')
+    .reset_index()
+    .rename(columns={'Year': 'Año', CAT1: 'Tipo de impuesto'})
+    .rename_axis(None, axis=1)
+)
+
+display(fig2)
 ```
 
 ::: {.flourish-embed}
@@ -133,7 +364,7 @@ Promedio anual del gasto tributario desagregado en consumo y renta para cada gru
         frameborder="0" scrolling="no"
         sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style="width:100%;height:600px;"></iframe>
-<noscript><img src="https://public.flourish.studio/visualisation/26652611/thumbnail" alt="Figura 2" /></noscript>
+<noscript><img src="https://public.flourish.studio/visualisation/26652611/thumbnail" alt="Figura 2: Comparativo gasto tributario por tipo de impuesto" /></noscript>
 :::
 
 *Fuente: elaboración propia con base en GTED y World Bank Country and Lending Groups. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26652611/)*
@@ -159,31 +390,80 @@ pd.read_csv('data/output/figuras/fig2.csv')
 
 ## Figura 3. Intensidad del gasto tributario {#sec-fig3}
 
-Ingreso renunciado como porcentaje de la recaudación por tipo de impuesto, para el año 2022.
-
-::: {.callout-warning collapse="true"}
-## Decisión pendiente · doble referencia en el notebook
-El notebook original referencia **dos** assets de Flourish para esta sección. Confirmar cuál corresponde:
-
-- [story/3603248](https://public.flourish.studio/story/3603248/) — formato Story
-- [visualisation/27999833](https://public.flourish.studio/visualisation/27999833/) — visualización simple
-:::
+Ingreso renunciado como porcentaje de la recaudación por tipo de impuesto, para el año 2022. Cruza GTED (gasto tributario) con UNU-WIDER GRD (recaudación efectiva) para medir cuánto se erosiona la base tributaria en cada categoría.
 
 ```{python}
 #| label: fig3-code
 #| eval: false
-# Código de Figura 3 — pendiente de portar del notebook original
+# ── Gasto tributario por país y tipo de impuesto (GTED) ──────────────────────
+te_year = (df_db.query('Year == @ANALYSIS_YEAR')
+           .groupby(['País (ISO-3)', CAT1, CAT2, CAT2A])['RF % of GDP']
+           .sum().rename('tax_expenditure').reset_index())
+
+# Tres niveles de agregación: total, categoría 1 y categoría 2
+te_all = pd.concat([
+    te_year.groupby('País (ISO-3)')['tax_expenditure'].sum().reset_index().assign(**{'Categoria de Impuesto': 'Total'}),
+    te_year.groupby(['País (ISO-3)', CAT1])['tax_expenditure'].sum().reset_index().rename(columns={CAT1: 'Categoria de Impuesto'}),
+    te_year[[CAT2A, 'País (ISO-3)', 'tax_expenditure']].rename(columns={CAT2A: 'Categoria de Impuesto'}),
+], ignore_index=True).assign(**{'Nivel de Impuesto': lambda x: x['Categoria de Impuesto'].map(level_map).fillna(2)})
+
+# ── Recaudación efectiva por país y tipo de impuesto (UNU-WIDER) ─────────────
+# Las columnas en TAX_COLS_UNU coinciden exactamente con los nombres aplanados de unu_raw
+tr_year = (
+    unu_raw.loc[unu_raw['Year'] == ANALYSIS_YEAR, ['Year', 'ISO'] + TAX_COLS_UNU]
+    .rename(columns=unu_rename)
+    .set_index('ISO').drop(columns='Year')
+    .T.groupby(level=0).sum().T            # colapsar columnas con el mismo nombre (ISC aparece dos veces)
+    .reset_index()
+    .melt(id_vars='ISO', var_name='Categoria de Impuesto', value_name='tax_revenue')
+    .assign(
+        tax_revenue          = lambda x: x['tax_revenue'] * 100,
+        **{'Nivel de Impuesto': lambda x: x['Categoria de Impuesto'].map(level_map)},
+    )
+)
+
+# ── Cruzar y calcular métricas ───────────────────────────────────────────────
+final_df = (
+    tr_year
+    .merge(te_all.rename(columns={'País (ISO-3)': 'ISO'}),
+           on=['ISO', 'Categoria de Impuesto', 'Nivel de Impuesto'], how='right')
+    .assign(
+        tax_expenditure = lambda x: pd.to_numeric(x['tax_expenditure'], errors='coerce'),
+        tax_revenue     = lambda x: pd.to_numeric(x['tax_revenue'],     errors='coerce'),
+    )
+)
+
+# Métricas: peso del gasto tributario sobre recaudación y sobre potencial total
+final_df['tax_weight'] = (final_df['tax_expenditure'] / final_df['tax_revenue'] * 100).where(final_df['tax_revenue'] != 0, 0)
+final_df['tax_wp']     = (final_df['tax_expenditure'] / (final_df['tax_revenue'] + final_df['tax_expenditure']) * 100).where((final_df['tax_revenue'] + final_df['tax_expenditure']) != 0, 0)
+final_df['color']      = final_df['ISO'].map({FOCAL_COUNTRY: 'colored'})
+final_df = final_df.merge(meta_cols, left_on='ISO', right_on='País (ISO-3)', how='left')
+
+# ── Tabla resumen: promedio por grupo de ingreso + fila Honduras ─────────────
+summary = (final_df
+           .groupby(['Categoria de Impuesto', 'Grupo de ingreso'])[['tax_revenue', 'tax_expenditure', 'tax_weight']]
+           .mean().reset_index().dropna())
+
+hnd_row = (final_df.query('ISO == @FOCAL_COUNTRY')
+           .assign(**{'Grupo de ingreso': 'Honduras'})[summary.columns])
+
+fig3 = (pd.concat([summary, hnd_row], ignore_index=True)
+        .pivot_table(index='Grupo de ingreso', columns='Categoria de Impuesto', values='tax_weight')
+        .reset_index())
+
+display(fig3)
 ```
 
 ::: {.flourish-embed}
-<iframe src="https://flo.uri.sh/visualisation/27999833/embed"
+<iframe src="https://flo.uri.sh/story/3603248/embed"
         title="Figura 3: Intensidad del gasto tributario"
         frameborder="0" scrolling="no"
-        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-scripts allow-downloads allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-        style="width:100%;height:600px;"></iframe>
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:700px;"></iframe>
+<noscript><img src="https://public.flourish.studio/story/3603248/thumbnail" alt="Figura 3: Intensidad del gasto tributario" /></noscript>
 :::
 
-*Fuente: elaboración propia con base en GTED y UNU-WIDER GRD. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/27999833/)*
+*Fuente: elaboración propia con base en GTED y UNU-WIDER GRD. [Ver en Flourish ↗](https://public.flourish.studio/story/3603248/)*
 
 ::: {.data-block}
 ```{=html}
@@ -208,24 +488,45 @@ pd.read_csv('data/output/figuras/fig3.csv')
 
 ## Figura 4. Erosión por mecanismo, 2017–2023 {#sec-fig4}
 
-Gasto tributario como porcentaje de la recaudación en Honduras, desagregado por tipo de impuesto.
+Gasto tributario como porcentaje de la recaudación efectiva en Honduras, desagregado por tipo de impuesto. Cruza GTED (numerador) con OCDE Revenue Statistics (denominador) usando el diccionario puente `gted_ocde`.
 
 ```{python}
 #| label: fig4-code
 #| eval: false
-# Código de Figura 4 — pendiente de portar del notebook original
+# ── Gasto tributario por categoría y año desde GTED (% PIB) ──────────────────
+# La columna `Tipo de Impuesto - Categoria 2` ya viene traducida desde la celda 1.1
+# vía translations.xlsx, incluyendo casos como 'Not stated/unclear' → ISR Personas Jurídicas.
+gted_te = (hnd
+           .query('Year >= @YEAR_MIN and Year <= @YEAR_MAX')
+           .merge(gted_ocde[['gted_cat2', 'categoria']],
+                  left_on=CAT2, right_on='gted_cat2', how='inner')
+           .groupby(['Year', 'categoria'])['RF (LCU)'].sum()
+           .unstack('categoria'))*1e-6
+
+# ── Recaudación por categoría y año desde OCDE (% PIB) ───────────────────────
+ocde_to_categoria = gted_ocde.set_index('ocde_category')['categoria'].to_dict()
+oecd_rev = (oecd
+            .rename(columns=ocde_to_categoria)
+            .loc[:, lambda df: df.columns.isin(gted_ocde['categoria'])])
+
+# ── Erosión: gasto tributario / recaudación efectiva, en porcentaje ──────────
+# El factor ×100 aplica directamente para que coincida con los ejes del gráfico
+# publicado (no es proporción decimal, es porcentaje).
+fig4 = ((gted_te / oecd_rev) * 100).dropna(how='all').reset_index().rename(columns={'Year': 'Año'})
+
+display(fig4)
 ```
 
 ::: {.flourish-embed}
-<iframe src="https://flo.uri.sh/visualisation/26724362/embed"
+<iframe src="https://flo.uri.sh/visualisation/27999833/embed"
         title="Figura 4: Erosión por mecanismo"
         frameborder="0" scrolling="no"
-        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-scripts allow-downloads allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style="width:100%;height:600px;"></iframe>
-<noscript><img src="https://public.flourish.studio/visualisation/26724362/thumbnail" alt="Figura 4" /></noscript>
+<noscript><img src="https://public.flourish.studio/visualisation/27999833/thumbnail" alt="Figura 4: Erosión por mecanismo" /></noscript>
 :::
 
-*Fuente: elaboración propia con base en GTED y OECD Revenue Statistics. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26724362/)*
+*Fuente: elaboración propia con base en GTED y OECD Revenue Statistics. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/27999833/)*
 
 ::: {.data-block}
 ```{=html}
@@ -248,24 +549,62 @@ pd.read_csv('data/output/figuras/fig4.csv')
 
 ## Figura 5. Consumo exento de ISV por quintil de ingreso {#sec-fig5}
 
-Consumo exento como porcentaje del consumo total, por quintil de ingreso disponible per cápita. Datos preliminares 2024.
+Consumo exento como porcentaje del consumo total dentro de cada quintil de ingreso disponible per cápita. Basado en microdatos de la ENIGH 2023-2024, con factores de expansión aplicados y clasificación tributaria por código CCIFH-2018.
 
 ```{python}
 #| label: fig5-code
 #| eval: false
-# Código de Figura 5 — pendiente de portar del notebook original
+# ── Clasificar gasto a nivel ítem y colapsar a hogar ─────────────────────────
+QCOL = 'QUINTIL_YDISPO_PER_SINYPDCP'
+gasto = enigh['GASTO_CONSUMO_MENS_SINALQUI'].fillna(0)
+
+enigh_fig = enigh.assign(
+    gasto_exento  = gasto * (enigh['exento'] == 'Exento'),
+    gasto_gravado = gasto * (enigh['exento'] == 'No Exento'),
+    gasto_total   = gasto,
+)
+
+hh = (enigh_fig.groupby('ID_HOGAR')
+                .agg(gasto_exento  = ('gasto_exento',  'sum'),
+                     gasto_gravado = ('gasto_gravado', 'sum'),
+                     gasto_total   = ('gasto_total',   'sum'),
+                     Factor        = ('Factor',        'first'),
+                     quintil       = (QCOL,            'first'))
+                .reset_index())
+
+# Expandir a totales poblacionales con el factor de expansión
+for c in ['gasto_exento', 'gasto_gravado', 'gasto_total']:
+    hh[c + '_w'] = hh[c] * hh['Factor']
+
+# ── Agregar por quintil y calcular participaciones ───────────────────────────
+qt = (hh.groupby('quintil')[['gasto_exento_w', 'gasto_gravado_w', 'gasto_total_w']]
+        .sum().reset_index().sort_values('quintil'))
+
+qt['pct_exento']    = 100 * qt['gasto_exento_w']  / qt['gasto_exento_w'].sum()    # share del exento total que captura el quintil
+qt['pct_gravado']   = 100 * qt['gasto_gravado_w'] / qt['gasto_gravado_w'].sum()   # share del gravado total que captura el quintil
+qt['pct_exento_q']  = 100 * qt['gasto_exento_w']  / qt['gasto_total_w']           # exento como % del consumo del quintil
+qt['pct_gravado_q'] = 100 * qt['gasto_gravado_w'] / qt['gasto_total_w']           # gravado como % del consumo del quintil
+
+# ── Figura 5: consumo exento como % del consumo total dentro de cada quintil ─
+fig5 = (qt[['quintil', 'pct_exento_q']]
+        .rename(columns={
+            'quintil':      'Quintil de ingreso',
+            'pct_exento_q': 'Consumo exento de ISV (% del consumo total del quintil)',
+        }))
+
+display(fig5)
 ```
 
 ::: {.flourish-embed}
-<iframe src="https://flo.uri.sh/visualisation/26722987/embed"
+<iframe src="https://flo.uri.sh/visualisation/26724362/embed"
         title="Figura 5: Consumo exento de ISV por quintil"
         frameborder="0" scrolling="no"
-        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-scripts allow-downloads allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style="width:100%;height:600px;"></iframe>
-<noscript><img src="https://public.flourish.studio/visualisation/26722987/thumbnail" alt="Figura 5" /></noscript>
+<noscript><img src="https://public.flourish.studio/visualisation/26724362/thumbnail" alt="Figura 5: Consumo exento de ISV por quintil" /></noscript>
 :::
 
-*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26722987/)*
+*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26724362/)*
 
 ::: {.data-block}
 ```{=html}
@@ -288,24 +627,32 @@ pd.read_csv('data/output/figuras/fig5.csv')
 
 ## Figura 6. Distribución del consumo exento por quintil {#sec-fig6}
 
-Participación de cada quintil en el consumo exento total.
+Participación de cada quintil en el consumo exento agregado del país. Reutiliza la tabla `qt` calculada en la Figura 5, cambiando el numerador (participación del quintil sobre el exento total, no exento sobre consumo del quintil).
 
 ```{python}
 #| label: fig6-code
 #| eval: false
-# Código de Figura 6 — pendiente de portar del notebook original
+# ── Figura 6: distribución del consumo exento entre quintiles ───────────────
+# Reutiliza la tabla `qt` calculada en la Figura 5
+fig6 = (qt[['quintil', 'pct_exento']]
+        .rename(columns={
+            'quintil':    'Quintil de ingreso',
+            'pct_exento': 'Participación en el consumo exento total (%)',
+        }))
+
+display(fig6)
 ```
 
 ::: {.flourish-embed}
-<iframe src="https://flo.uri.sh/visualisation/28006279/embed"
+<iframe src="https://flo.uri.sh/visualisation/26722987/embed"
         title="Figura 6: Distribución del consumo exento por quintil"
         frameborder="0" scrolling="no"
-        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-scripts allow-downloads allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style="width:100%;height:600px;"></iframe>
-<noscript><img src="https://public.flourish.studio/visualisation/28006279/thumbnail" alt="Figura 6" /></noscript>
+<noscript><img src="https://public.flourish.studio/visualisation/26722987/thumbnail" alt="Figura 6: Distribución del consumo exento por quintil" /></noscript>
 :::
 
-*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/28006279/)*
+*Fuente: elaboración propia con base en ENIGH 2023-2024 (BCH). [Ver en Flourish ↗](https://public.flourish.studio/visualisation/26722987/)*
 
 ::: {.data-block}
 ```{=html}
@@ -328,18 +675,50 @@ pd.read_csv('data/output/figuras/fig6.csv')
 
 ## Figura 7. Composición del gasto tributario en ISR persona jurídica, 2023 {#sec-fig7}
 
-Desagregación por régimen tributario, en millones de dólares.
-
-::: {.callout-warning collapse="true"}
-## ID de Flourish pendiente
-El notebook original no incluye link a Flourish para esta figura. Confirmar si existe una visualización o si solo aparece como gráfico estático en el PDF.
-:::
+Desagregación del gasto tributario del Impuesto sobre la Renta de Personas Jurídicas por régimen tributario, en millones de dólares. Los regímenes se identifican extrayendo el sufijo de `TE name (original language)` en GTED y cruzando con las descripciones normativas en `ISRPJ_Descripción.xlsx`.
 
 ```{python}
 #| label: fig7-code
 #| eval: false
-# Código de Figura 7 — pendiente de portar del notebook original
+ANALYSIS_YEAR_FIG7 = 2023
+
+cit_year = (hnd
+            .query('`Tax type - Level 1` == "Taxes on Income" and '
+                   '`Tax type - Level 2` == "Corporate Income Tax (CIT)" and '
+                   'Year == @ANALYSIS_YEAR_FIG7')
+            .copy())
+
+fig7 = (cit_year
+        .assign(**{
+            'Régimen':                       lambda x: x['TE name (original language)'].str.rsplit(' - ', n=1).str[-1],
+            'Gasto tributario (millones USD)': lambda x: x['RF (USD)'] / 1e6,
+        })
+        .query('not `Régimen`.str.startswith("Estado")', engine='python')
+        .merge(isrpj_desc.rename(columns={'Categoria 3': 'Régimen', 'Descripción': 'Descripción del régimen'}),
+               on='Régimen', how='left')
+        .rename(columns={'Year': 'Año', 'Tipo de Impuesto - Categoria 2': 'Tipo de impuesto'})
+        [['Año', 'Tipo de impuesto', 'Régimen', 'Gasto tributario (millones USD)', 'Descripción del régimen']]
+        .sort_values('Gasto tributario (millones USD)', ascending=False)
+        .reset_index(drop=True))
+
+# Verificación: ningún régimen sin descripción
+faltantes = fig7[fig7['Descripción del régimen'].isna()]['Régimen'].tolist()
+if faltantes:
+    print(f'⚠️  Regímenes sin descripción en ISRPJ_Descripción.xlsx: {faltantes}')
+
+display(fig7)
 ```
+
+::: {.flourish-embed}
+<iframe src="https://flo.uri.sh/visualisation/28006279/embed"
+        title="Figura 7: Composición del gasto tributario en ISR persona jurídica"
+        frameborder="0" scrolling="no"
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        style="width:100%;height:600px;"></iframe>
+<noscript><img src="https://public.flourish.studio/visualisation/28006279/thumbnail" alt="Figura 7: Composición del gasto tributario en ISR persona jurídica" /></noscript>
+:::
+
+*Fuente: elaboración propia con base en GTED. [Ver en Flourish ↗](https://public.flourish.studio/visualisation/28006279/)*
 
 ::: {.data-block}
 ```{=html}
@@ -362,4 +741,33 @@ pd.read_csv('data/output/figuras/fig7.csv')
 
 # Exportación de resultados {#sec-export}
 
-> **Pendiente de portar.** Generación del archivo `data/output/gasto_tributario_honduras.xlsx` (ya presente en el repo como referencia) y de los CSVs por figura.
+Se consolida cada `figN` como una hoja del archivo `gasto_tributario_honduras (automaticamente generado).xlsx`. El XLSX presentacional publicado en `data/output/` mantiene su versión final con encabezados y notas de fuente; el archivo generado por el notebook es la versión pura de los datos.
+
+```{python}
+#| label: export
+#| eval: false
+OUTPUT_PATH = path('data/output/gasto_tributario_honduras (automaticamente generado).xlsx')
+os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+
+# Cada DataFrame figN ya está construido con los nombres finales y las
+# transformaciones de presentación aplicadas (ver cada celda de figura).
+# El export es una operación pura: una hoja por figura.
+
+FIGURES = {
+    'Fig.1_PorPais':        fig1,
+    'Fig.2_PorImpuesto':    fig2,
+    'Fig.3_Intensidad':     fig3,
+    'Fig.4_Erosion':        fig4,
+    'Fig.5_ExentoQuintil':  fig5,
+    'Fig.6_DistribQuintil': fig6,
+    'Fig.7_RegimenISRPJ':   fig7,
+}
+
+with pd.ExcelWriter(OUTPUT_PATH, engine='openpyxl') as writer:
+    for sheet_name, df in FIGURES.items():
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+print(f"Exportado: {OUTPUT_PATH}")
+for name, df in FIGURES.items():
+    print(f"  {name}: {df.shape[0]} filas × {df.shape[1]} columnas")
+```
